@@ -1015,18 +1015,18 @@ export default function Component() {
       </Canvas>
 
       {/* Info overlay */}
-      <div className="absolute top-4 left-4 text-white bg-black/90 p-4 rounded-lg border border-gray-600 shadow-xl" style={{
+      <div className="absolute top-6 left-6 text-white bg-black/90 p-6 rounded-xl border border-gray-600 shadow-2xl" style={{
         backdropFilter: 'blur(10px)',
-        maxWidth: '320px'
+        maxWidth: '380px'
       }}>
-        <h2 className="text-xl font-bold mb-3 text-blue-400 border-b border-gray-600 pb-2">Three.js Interactive Lines</h2>
-        <div className="space-y-1 text-sm">
-          <p className="text-gray-300">2000 disconnected lines</p>
-          <p className="text-gray-300">Dynamic editing capabilities</p>
-          <p className="text-gray-300">Single Line2 object</p>
+        <h2 className="text-2xl font-bold mb-4 text-blue-400 border-b border-gray-600 pb-3">Line2 Performance Comparison</h2>
+        <div className="space-y-2 text-sm mb-6">
+          <p className="text-gray-300">2000 interactive lines</p>
+          <p className="text-gray-300">Performance comparison tool</p>
+          <p className="text-gray-300">Real-time metrics & analysis</p>
         </div>
         
-        <div className="mt-4 space-y-2">
+        <div className="space-y-3 mb-6">
           <p className="text-sm text-yellow-400">🎯 Hover: Yellow highlight</p>
           <p className="text-sm text-purple-400">🎯 Click: Magenta selection + white spheres</p>
           <p className="text-sm text-green-400">🎯 Click selected line: Add green point</p>
@@ -1035,22 +1035,22 @@ export default function Component() {
           <p className="text-sm text-gray-300">Click empty space to deselect</p>
         </div>
         
-        <div className="mt-6">
-          <h3 className="text-lg font-bold mb-3 text-blue-400">Rendering Mode</h3>
-          <div className="flex space-x-2">
+        <div>
+          <h3 className="text-lg font-bold mb-4 text-blue-400">Rendering Mode</h3>
+          <div className="flex flex-col space-y-2">
             <Button 
               onClick={() => setMode('A')} 
               variant={mode === 'A' ? "default" : "outline"} 
-              className={`${mode === 'A' ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-gray-800 hover:bg-gray-700 text-gray-200'} border-gray-600 font-semibold shadow-lg`}
+              className={`${mode === 'A' ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-gray-800 hover:bg-gray-700 text-gray-200'} border-gray-600 font-semibold shadow-lg px-3 py-2 text-sm`}
             >
-              Disconnected Lines
+              Disconnected Lines - Single Line2 Object
             </Button>
             <Button 
               onClick={() => setMode('B')} 
               variant={mode === 'B' ? "default" : "outline"} 
-              className={`${mode === 'B' ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-gray-800 hover:bg-gray-700 text-gray-200'} border-gray-600 font-semibold shadow-lg`}
+              className={`${mode === 'B' ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-gray-800 hover:bg-gray-700 text-gray-200'} border-gray-600 font-semibold shadow-lg px-3 py-2 text-sm`}
             >
-              Multiple Line2
+              Multiple Line2 Objects
             </Button>
           </div>
         </div>
@@ -1058,29 +1058,29 @@ export default function Component() {
 
       {/* Control panel */}
       {selectedLineIndex !== null && (
-        <div className="absolute top-4 right-4 bg-black/90 p-4 rounded-lg border border-gray-600 shadow-xl" style={{
+        <div className="absolute top-6 right-6 bg-black/90 p-6 rounded-xl border border-gray-600 shadow-2xl" style={{
           backdropFilter: 'blur(10px)',
-          minWidth: '180px',
+          minWidth: '200px',
           zIndex: '1002',
-          top: '80px' // Position below the stats.js panel
+          top: '90px' // Position below the stats.js panel
         }}>
-          <h3 className="text-white text-lg font-bold mb-3 text-blue-400 border-b border-gray-600 pb-2">Line Controls</h3>
-          <p className="text-white text-sm mb-4 bg-gray-800/50 p-2 rounded">Selected Line: <span className="text-purple-400 font-bold">{selectedLineIndex}</span></p>
-          <Button onClick={handleDeleteLine} variant="destructive" size="sm" className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold shadow-lg">
+          <h3 className="text-white text-lg font-bold mb-4 text-blue-400 border-b border-gray-600 pb-3">Line Controls</h3>
+          <p className="text-white text-sm mb-4 bg-gray-800/50 p-3 rounded-lg">Selected Line: <span className="text-purple-400 font-bold">{selectedLineIndex}</span></p>
+          <Button onClick={handleDeleteLine} variant="destructive" size="sm" className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold shadow-lg py-2">
             🗑️ Delete Line
           </Button>
         </div>
       )}
 
       {/* Performance Stats */}
-      <div className="absolute bottom-4 right-4 bg-black/90 p-4 rounded-lg border border-gray-600 shadow-xl" style={{ 
-        bottom: '10px',
-        right: '10px',
-        minWidth: '200px',
+      <div className="absolute bottom-6 right-6 bg-black/90 p-6 rounded-xl border border-gray-600 shadow-2xl" style={{ 
+        bottom: '20px',
+        right: '20px',
+        minWidth: '220px',
         backdropFilter: 'blur(10px)',
         zIndex: '1001'
       }}>
-        <h3 className="text-white text-lg font-bold mb-3 text-blue-400 border-b border-gray-600 pb-2">Performance Stats</h3>
+        <h3 className="text-white text-lg font-bold mb-4 text-blue-400 border-b border-gray-600 pb-3">Performance Stats</h3>
         <div className="space-y-2 text-sm">
           <div className="flex justify-between items-center">
             <span className="text-gray-300">FPS:</span>
@@ -1118,11 +1118,11 @@ export default function Component() {
       </div>
 
       {/* Debug and Stats info overlay */}
-      <div className="absolute bottom-4 left-4 text-white bg-black/90 p-4 rounded-lg border border-gray-600 shadow-xl" style={{
+      <div className="absolute bottom-6 left-6 text-white bg-black/90 p-6 rounded-xl border border-gray-600 shadow-2xl" style={{
         backdropFilter: 'blur(10px)',
-        maxWidth: '380px'
+        maxWidth: '420px'
       }}>
-        <h3 className="text-lg font-bold mb-3 text-blue-400 border-b border-gray-600 pb-2">Debug Info</h3>
+        <h3 className="text-lg font-bold mb-4 text-blue-400 border-b border-gray-600 pb-3">Debug Info</h3>
         <div className="space-y-2 text-sm text-gray-300">
           <p className="break-words bg-gray-800/50 p-2 rounded">{debugInfo || "Hover and click on lines"}</p>
           <div className="flex justify-between items-center">
