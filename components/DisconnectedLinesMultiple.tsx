@@ -92,7 +92,7 @@ function DisconnectedLinesMultiple({ onDebugUpdate, onLineDeleted, setInteractio
 
   useEffect(() => {
     console.time("Mode B Initial Load")
-    const numLines = 2000
+    const numLines = 5000
     const pointsPerLine = 50
     const gridSize = Math.ceil(Math.pow(numLines, 1 / 3))
     const spacing = 30

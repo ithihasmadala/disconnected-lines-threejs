@@ -1,7 +1,7 @@
 # Three.js Disconnected Lines 
 ## Line2 Performance Comparison - Single vs Multiple Objects
 
-A Next.js application demonstrating high-performance interactive 3D line rendering using Three.js and React Three Fiber. This project compares single Line2 object optimization vs multiple Line2 objects for rendering 2000+ interactive lines with real-time editing capabilities.
+A Next.js application demonstrating high-performance interactive 3D line rendering using Three.js and React Three Fiber. This project compares single Line2 object optimization vs multiple Line2 objects for rendering 5000+ interactive lines with real-time editing capabilities.
 
 ## 🚀 Live Demo
 
@@ -33,7 +33,7 @@ pnpm deploy
 
 ## 🎯 Key Features
 
-- **Performance Optimization**: Single Line2 object rendering for 2000+ lines
+- **Performance Optimization**: Single Line2 object rendering for 5000+ lines
 - **Interactive Editing**: Real-time point manipulation and line editing
 - **Dynamic Point Management**: Add, delete, and drag points on lines
 - **Performance Monitoring**: Real-time FPS and rendering statistics
@@ -70,7 +70,7 @@ The `DisconnectedLines` component circumvents this by:
 *   **`segmentToLineMap`:** This is a crucial lookup array. Since all segments are merged, we need a way to know which original line a given segment belongs to. `segmentToLineMap[segmentIndex]` stores the `lineIndex` of the line that the `segmentIndex`-th segment (in the combined `positions` array) is part of. This is vital for interaction logic (hover, selection).
 *   **`linePoints`:** A nested array `linePoints[lineIndex][pointIndex]` stores the actual `[x, y, z]` coordinates for each point of each individual line. This is the "source of truth" for the line data, from which the `positions` and `colors` `Float32Array`s are generated.
 
-By doing this, the entire collection of 2000 lines is rendered with **just one draw call**, leading to significant performance gains.
+By doing this, the entire collection of 5000 lines is rendered with **just one draw call**, leading to significant performance gains.
 
 ---
 
@@ -101,7 +101,7 @@ The initial set of lines is generated once when the component mounts:
 
 ```typescript
 const initialLineData = useMemo((): LineData => {
-  const numLines = 2000;
+  const numLines = 5000;
   const pointsPerLine = 50;
 
   // ... (grid and spacing calculations) ...

@@ -3,7 +3,7 @@ import './globals.css'
 
 export const metadata: Metadata = {
   title: 'Line2 Performance Comparison - Single vs Multiple Objects',
-  description: 'Performance comparison between single Line2 object vs multiple Line2 objects for rendering 2000+ interactive lines. Real-time editing, dynamic point manipulation, and performance monitoring.',
+  description: 'Performance comparison between single Line2 object vs multiple Line2 objects for rendering 5000+ interactive lines. Real-time editing, dynamic point manipulation, and performance monitoring.',
   keywords: 'Three.js, Line2, performance comparison, WebGL, 3D graphics, interactive lines, React Three Fiber, rendering optimization',
   authors: [{ name: 'Line2 Performance Comparison' }],
   creator: 'Line2 Performance Comparison',
@@ -11,14 +11,14 @@ export const metadata: Metadata = {
   robots: 'index, follow',
   openGraph: {
     title: 'Line2 Performance Comparison - Single vs Multiple Objects',
-    description: 'Performance comparison between single Line2 object vs multiple Line2 objects for rendering 2000+ interactive lines',
+    description: 'Performance comparison between single Line2 object vs multiple Line2 objects for rendering 5000+ interactive lines',
     type: 'website',
     locale: 'en_US',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Line2 Performance Comparison - Single vs Multiple Objects',
-    description: 'Performance comparison between single Line2 object vs multiple Line2 objects for rendering 2000+ interactive lines',
+    description: 'Performance comparison between single Line2 object vs multiple Line2 objects for rendering 5000+ interactive lines',
   },
   icons: {
     icon: [

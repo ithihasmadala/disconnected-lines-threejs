@@ -62,7 +62,7 @@ function DisconnectedLines({ onDebugUpdate, onLineDeleted, setInteractionStats, 
 
   // Initialize line data
   const initialLineData = useMemo((): LineData => {
-    const numLines = 2000
+    const numLines = 5000
     const pointsPerLine = 50
 
     // Create a 3D grid to distribute lines
@@ -1064,7 +1064,7 @@ export default function Component() {
       }}>
         <h2 className="text-2xl font-bold mb-4 text-blue-400 border-b border-gray-600 pb-3">Line2 Performance Comparison</h2>
         <div className="space-y-2 text-sm mb-6">
-          <p className="text-gray-300">2000 interactive lines</p>
+          <p className="text-gray-300">5000 interactive lines</p>
           <p className="text-gray-300">Performance comparison tool</p>
           <p className="text-gray-300">Real-time metrics & analysis</p>
         </div>
