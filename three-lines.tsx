@@ -41,6 +41,24 @@ function DisconnectedLines({ onDebugUpdate, onLineDeleted, setInteractionStats, 
   const { camera, gl, scene } = useThree()
   const raycaster = useMemo(() => new Raycaster(), [])
   const mouse = useMemo(() => new Vector2(), [])
+  
+  // Update renderer stats
+  useEffect(() => {
+    const updateRendererStats = () => {
+      if (gl && gl.info) {
+        setPerformanceStats(prev => ({
+          ...prev,
+          triangles: gl.info.render.triangles || 0,
+          renderCalls: gl.info.render.calls || 0,
+          drawCalls: gl.info.render.drawCalls || 0
+        }))
+      }
+    }
+    
+    // Update stats every second
+    const interval = setInterval(updateRendererStats, 1000)
+    return () => clearInterval(interval)
+  }, [gl, setPerformanceStats])
 
   // Initialize line data
   const initialLineData = useMemo((): LineData => {
@@ -874,6 +892,9 @@ export default function Component() {
     cpuTime: 0,
     gpuTime: 0
   })
+  const fpsHistory = useRef<number[]>([])
+  const memoryHistory = useRef<number[]>([])
+  const lastUpdateTime = useRef<number>(0)
   const statsRef = useRef<Stats | null>(null)
   const lastFrameTimeRef = useRef<number>(0)
 
@@ -945,11 +966,32 @@ export default function Component() {
           fps = Math.round(1000 / deltaTime)
         }
         
-        setPerformanceStats(prev => ({
-          ...prev,
-          fps: fps,
-          memory: memory
-        }))
+        // Smooth FPS and memory values to reduce glitching
+        if (fps > 0) {
+          fpsHistory.current.push(fps)
+          if (fpsHistory.current.length > 30) { // Increased from 10 to 30 for more smoothing
+            fpsHistory.current.shift()
+          }
+          fps = Math.round(fpsHistory.current.reduce((a, b) => a + b, 0) / fpsHistory.current.length)
+        }
+        
+        if (memory > 0) {
+          memoryHistory.current.push(memory)
+          if (memoryHistory.current.length > 15) { // Increased from 5 to 15 for more smoothing
+            memoryHistory.current.shift()
+          }
+          memory = Math.round(memoryHistory.current.reduce((a, b) => a + b, 0) / memoryHistory.current.length)
+        }
+        
+        // Only update stats every 1000ms (1 second) to reduce glitching
+        if (currentTime - lastUpdateTime.current > 1000) {
+          setPerformanceStats(prev => ({
+            ...prev,
+            fps: fps,
+            memory: memory
+          }))
+          lastUpdateTime.current = currentTime
+        }
         
         lastFrameTimeRef.current = currentTime
       }
@@ -1010,6 +1052,7 @@ export default function Component() {
               setInteractionStats((prev) => ({ ...prev, deleteLine: performance.now() - (prev.deleteLine_start || 0) }))
             }}
             setInteractionStats={setInteractionStats}
+            setPerformanceStats={setPerformanceStats}
           />
         )}
       </Canvas>
@@ -1073,46 +1116,31 @@ export default function Component() {
       )}
 
       {/* Performance Stats */}
-      <div className="absolute bottom-6 right-6 bg-black/90 p-6 rounded-xl border border-gray-600 shadow-2xl" style={{ 
-        bottom: '20px',
-        right: '20px',
-        minWidth: '220px',
+      <div className="absolute bottom-4 right-4 bg-black/90 p-4 rounded-lg border border-gray-600 shadow-xl" style={{ 
+        bottom: '16px',
+        right: '16px',
+        minWidth: '200px',
+        maxWidth: '220px',
         backdropFilter: 'blur(10px)',
         zIndex: '1001'
       }}>
-        <h3 className="text-white text-lg font-bold mb-4 text-blue-400 border-b border-gray-600 pb-3">Performance Stats</h3>
-        <div className="space-y-2 text-sm">
+        <h3 className="text-white text-sm font-bold mb-3 text-blue-400 border-b border-gray-600 pb-2">Performance</h3>
+        <div className="space-y-2 text-xs">
           <div className="flex justify-between items-center">
             <span className="text-gray-300">FPS:</span>
             <span className="text-green-400 font-mono font-bold">{performanceStats.fps}</span>
           </div>
           <div className="flex justify-between items-center">
             <span className="text-gray-300">Memory:</span>
-            <span className="text-blue-400 font-mono font-bold">{performanceStats.memory} MB</span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-gray-300">Vertices:</span>
-            <span className="text-purple-400 font-mono">{performanceStats.vertices.toLocaleString()}</span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-gray-300">Segments:</span>
-            <span className="text-cyan-400 font-mono">{performanceStats.segments.toLocaleString()}</span>
+            <span className="text-blue-400 font-mono">{performanceStats.memory} MB</span>
           </div>
           <div className="flex justify-between items-center">
             <span className="text-gray-300">Lines:</span>
             <span className="text-orange-400 font-mono">{performanceStats.lines.toLocaleString()}</span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-gray-300">Triangles:</span>
-            <span className="text-yellow-400 font-mono">{performanceStats.triangles.toLocaleString()}</span>
-          </div>
-          <div className="flex justify-between items-center">
             <span className="text-gray-300">Render Calls:</span>
             <span className="text-pink-400 font-mono">{performanceStats.renderCalls}</span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-gray-300">Draw Calls:</span>
-            <span className="text-indigo-400 font-mono">{performanceStats.drawCalls}</span>
           </div>
         </div>
       </div>

@@ -18,9 +18,10 @@ interface DisconnectedLinesMultipleProps {
   onDebugUpdate: (info: string, hoveredLine: number | null, selectedLine: number | null) => void
   onLineDeleted?: (lineIndex: number) => void
   setInteractionStats: (stats: any) => void
+  setPerformanceStats: (stats: any) => void
 }
 
-function DisconnectedLinesMultiple({ onDebugUpdate, onLineDeleted, setInteractionStats }: DisconnectedLinesMultipleProps) {
+function DisconnectedLinesMultiple({ onDebugUpdate, onLineDeleted, setInteractionStats, setPerformanceStats }: DisconnectedLinesMultipleProps) {
   const [lines, setLines] = useState<LineData[]>([])
   const spheresRef = useRef<Mesh[]>([])
   const orbitControlsRef = useRef<any>(null)
@@ -32,6 +33,24 @@ function DisconnectedLinesMultiple({ onDebugUpdate, onLineDeleted, setInteractio
   const { camera, gl, scene } = useThree()
   const raycaster = useMemo(() => new Raycaster(), [])
   const mouse = useMemo(() => new Vector2(), [])
+  
+  // Update renderer stats
+  useEffect(() => {
+    const updateRendererStats = () => {
+      if (gl && gl.info) {
+        setPerformanceStats(prev => ({
+          ...prev,
+          triangles: gl.info.render.triangles || 0,
+          renderCalls: gl.info.render.calls || 0,
+          drawCalls: gl.info.render.drawCalls || 0
+        }))
+      }
+    }
+    
+    // Update stats every second
+    const interval = setInterval(updateRendererStats, 1000)
+    return () => clearInterval(interval)
+  }, [gl, setPerformanceStats])
 
   const removeSpheres = useCallback(() => {
     spheresRef.current.forEach(sphere => {
