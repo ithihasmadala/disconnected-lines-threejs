@@ -25,9 +25,10 @@ interface DisconnectedLinesProps {
   onDebugUpdate: (info: string, hoveredLine: number | null, selectedLine: number | null) => void
   onLineDeleted?: (lineIndex: number) => void
   setInteractionStats: (stats: any) => void
+  setPerformanceStats: (stats: any) => void
 }
 
-function DisconnectedLines({ onDebugUpdate, onLineDeleted, setInteractionStats }: DisconnectedLinesProps) {
+function DisconnectedLines({ onDebugUpdate, onLineDeleted, setInteractionStats, setPerformanceStats }: DisconnectedLinesProps) {
   const lineRef = useRef<Line2>(null)
   const spheresRef = useRef<Mesh[]>([])
   const orbitControlsRef = useRef<any>(null)
@@ -470,6 +471,26 @@ function DisconnectedLines({ onDebugUpdate, onLineDeleted, setInteractionStats }
     spheresRef.current = []
   }, [scene])
 
+  // Update performance stats when line data changes
+  useEffect(() => {
+    if (lineData) {
+      const totalPoints = lineData.positions.length / 3
+      const totalLines = lineData.linePoints.filter(points => points && points.length > 0).length
+      const totalSegments = lineData.segmentToLineMap.length
+      const totalVertices = totalPoints
+      const totalTriangles = spheresRef.current.length * 96 // Approximate triangles per sphere
+      
+      setPerformanceStats((prev: any) => ({
+        ...prev,
+        points: totalPoints,
+        vertices: totalVertices,
+        segments: totalSegments,
+        lines: totalLines,
+        triangles: totalTriangles
+      }))
+    }
+  }, [lineData, setPerformanceStats])
+
   // Right-click handler for point deletion
   useEffect(() => {
     const handleContextMenu = (event: MouseEvent) => {
@@ -612,7 +633,7 @@ function DisconnectedLines({ onDebugUpdate, onLineDeleted, setInteractionStats }
             setHoveredLineIndex(null)
           }
         }
-        setInteractionStats((prev: any) => ({ ...prev, hover: performance.now() - start }))
+        setInteractionStats((prev: any) => ({ ...prev, raycaster: performance.now() - start }))
       }
     }
 
@@ -839,40 +860,108 @@ export default function Component() {
   const [selectedLineIndex, setSelectedLineIndex] = useState<number | null>(null)
   const [mode, setMode] = useState<'A' | 'B'>('A')
   const [interactionStats, setInteractionStats] = useState<InteractionStats>({})
+  const [performanceStats, setPerformanceStats] = useState({
+    fps: 0,
+    memory: 0,
+    triangles: 0,
+    points: 0,
+    lines: 0,
+    renderCalls: 0,
+    drawCalls: 0,
+    segments: 0,
+    vertices: 0,
+    gpuMemory: 0,
+    cpuTime: 0,
+    gpuTime: 0
+  })
   const statsRef = useRef<Stats | null>(null)
+  const lastFrameTimeRef = useRef<number>(0)
 
   useEffect(() => {
     statsRef.current = new Stats()
     statsRef.current.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
     document.body.appendChild(statsRef.current.dom)
 
-    const toggleStatsPanel = () => {
-      if (statsRef.current) {
-        const currentPanel = statsRef.current.dom.style.display
-        statsRef.current.showPanel(currentPanel === "none" ? 0 : 2)
-      }
-    }
+    // Position stats panel to the top right
+    statsRef.current.dom.style.position = 'absolute'
+    statsRef.current.dom.style.top = '10px'
+    statsRef.current.dom.style.right = '10px'
+    statsRef.current.dom.style.bottom = 'auto'
+    statsRef.current.dom.style.left = 'auto'
+    statsRef.current.dom.style.zIndex = '1000'
+    statsRef.current.dom.style.opacity = '0.9'
+    statsRef.current.dom.style.pointerEvents = 'auto'
+    statsRef.current.dom.style.display = 'block'
 
-    const statsToggleButton = document.createElement("button")
-    statsToggleButton.textContent = "Toggle Stats (FPS/MB)"
-    statsToggleButton.style.position = "absolute"
-    statsToggleButton.style.top = "4px"
-    statsToggleButton.style.left = "100px"
-    statsToggleButton.style.zIndex = "1000"
-    statsToggleButton.onclick = toggleStatsPanel
-    document.body.appendChild(statsToggleButton)
+
 
     const animate = () => {
-      statsRef.current?.begin()
-      statsRef.current?.end()
+      if (statsRef.current) {
+        statsRef.current.begin()
+        statsRef.current.end()
+        
+        // Update performance stats using stats.js internal data
+        const currentTime = performance.now()
+        let fps = 0
+        let memory = 0
+        
+        // Get FPS from stats.js internal data
+        if (statsRef.current && (statsRef.current as any).dom) {
+          // Try to get FPS from the stats panel - look for the FPS text
+          const allText = statsRef.current.dom.textContent || ''
+          
+          // Look for FPS pattern - stats.js usually shows "60 FPS" or similar
+          const fpsMatch = allText.match(/(\d+)\s*FPS|FPS:\s*(\d+)/i)
+          if (fpsMatch) {
+            fps = parseInt(fpsMatch[1] || fpsMatch[2])
+          }
+          
+          // If no FPS found, try to get the first number (usually FPS)
+          if (fps === 0) {
+            const numbers = allText.match(/\d+/g)
+            if (numbers && numbers.length > 0) {
+              const potentialFps = parseInt(numbers[0])
+              if (potentialFps > 0 && potentialFps <= 200) { // Reasonable FPS range
+                fps = potentialFps
+              }
+            }
+          }
+          
+          // Get memory from stats.js - look for MB pattern
+          const memoryMatch = allText.match(/(\d+)\s*MB|MB:\s*(\d+)/i)
+          if (memoryMatch) {
+            memory = parseInt(memoryMatch[1] || memoryMatch[2])
+          }
+        }
+        
+        // Fallback to performance.memory if stats.js doesn't have memory data
+        if (memory === 0 && performance.memory) {
+          memory = Math.round(performance.memory.usedJSHeapSize / 1048576)
+        }
+        
+        // Fallback FPS calculation if stats.js doesn't provide it
+        if (fps === 0 && lastFrameTimeRef.current > 0) {
+          const deltaTime = currentTime - lastFrameTimeRef.current
+          fps = Math.round(1000 / deltaTime)
+        }
+        
+        setPerformanceStats(prev => ({
+          ...prev,
+          fps: fps,
+          memory: memory
+        }))
+        
+        lastFrameTimeRef.current = currentTime
+      }
       requestAnimationFrame(animate)
     }
 
     requestAnimationFrame(animate)
 
     return () => {
-      document.body.removeChild(statsRef.current!.dom)
-      document.body.removeChild(statsToggleButton)
+      if (statsRef.current) {
+        document.body.removeChild(statsRef.current.dom)
+      }
     }
   }, [])
 
@@ -910,6 +999,7 @@ export default function Component() {
               setDebugInfo(`Line ${lineIndex} deleted`)
             }}
             setInteractionStats={setInteractionStats}
+            setPerformanceStats={setPerformanceStats}
           />
         ) : (
           <DisconnectedLinesMultiple 
@@ -925,47 +1015,136 @@ export default function Component() {
       </Canvas>
 
       {/* Info overlay */}
-      <div className="absolute top-4 left-4 text-white bg-black/50 p-4 rounded">
-        <h2 className="text-lg font-bold mb-2">Three.js Interactive Lines</h2>
-        <p className="text-sm">2000 disconnected lines</p>
-        <p className="text-sm">Dynamic editing capabilities</p>
-        <p className="text-sm">Single Line2 object</p>
-        <p className="text-sm mt-2 text-yellow-400">🎯 Hover: Yellow highlight</p>
-        <p className="text-sm text-purple-400">🎯 Click: Magenta selection + white spheres</p>
-        <p className="text-sm text-green-400">🎯 Click selected line: Add green point</p>
-        <p className="text-sm text-blue-400">🖱️ Drag spheres: Move points</p>
-        <p className="text-sm text-orange-400">🗑️ Right-click sphere: Delete point</p>
-        <p className="text-sm text-gray-300">Click empty space to deselect</p>
-        <div className="mt-4">
-          <h3 className="text-lg font-bold mb-2">Rendering Mode</h3>
+      <div className="absolute top-4 left-4 text-white bg-black/90 p-4 rounded-lg border border-gray-600 shadow-xl" style={{
+        backdropFilter: 'blur(10px)',
+        maxWidth: '320px'
+      }}>
+        <h2 className="text-xl font-bold mb-3 text-blue-400 border-b border-gray-600 pb-2">Three.js Interactive Lines</h2>
+        <div className="space-y-1 text-sm">
+          <p className="text-gray-300">2000 disconnected lines</p>
+          <p className="text-gray-300">Dynamic editing capabilities</p>
+          <p className="text-gray-300">Single Line2 object</p>
+        </div>
+        
+        <div className="mt-4 space-y-2">
+          <p className="text-sm text-yellow-400">🎯 Hover: Yellow highlight</p>
+          <p className="text-sm text-purple-400">🎯 Click: Magenta selection + white spheres</p>
+          <p className="text-sm text-green-400">🎯 Click selected line: Add green point</p>
+          <p className="text-sm text-blue-400">🖱️ Drag spheres: Move points</p>
+          <p className="text-sm text-orange-400">🗑️ Right-click sphere: Delete point</p>
+          <p className="text-sm text-gray-300">Click empty space to deselect</p>
+        </div>
+        
+        <div className="mt-6">
+          <h3 className="text-lg font-bold mb-3 text-blue-400">Rendering Mode</h3>
           <div className="flex space-x-2">
-            <Button onClick={() => setMode('A')} variant={mode === 'A' ? "secondary" : "outline"} className="text-white">Disconnected Lines</Button>
-            <Button onClick={() => setMode('B')} variant={mode === 'B' ? "secondary" : "outline"} className="text-white">Multiple Line2</Button>
+            <Button 
+              onClick={() => setMode('A')} 
+              variant={mode === 'A' ? "default" : "outline"} 
+              className={`${mode === 'A' ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-gray-800 hover:bg-gray-700 text-gray-200'} border-gray-600 font-semibold shadow-lg`}
+            >
+              Disconnected Lines
+            </Button>
+            <Button 
+              onClick={() => setMode('B')} 
+              variant={mode === 'B' ? "default" : "outline"} 
+              className={`${mode === 'B' ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-gray-800 hover:bg-gray-700 text-gray-200'} border-gray-600 font-semibold shadow-lg`}
+            >
+              Multiple Line2
+            </Button>
           </div>
         </div>
       </div>
 
       {/* Control panel */}
       {selectedLineIndex !== null && (
-        <div className="absolute top-4 right-4 bg-black/70 p-4 rounded">
-          <h3 className="text-white text-lg font-bold mb-2">Line Controls</h3>
-          <p className="text-white text-sm mb-3">Selected Line: {selectedLineIndex}</p>
-          <Button onClick={handleDeleteLine} variant="destructive" size="sm" className="w-full">
+        <div className="absolute top-4 right-4 bg-black/90 p-4 rounded-lg border border-gray-600 shadow-xl" style={{
+          backdropFilter: 'blur(10px)',
+          minWidth: '180px',
+          zIndex: '1002',
+          top: '80px' // Position below the stats.js panel
+        }}>
+          <h3 className="text-white text-lg font-bold mb-3 text-blue-400 border-b border-gray-600 pb-2">Line Controls</h3>
+          <p className="text-white text-sm mb-4 bg-gray-800/50 p-2 rounded">Selected Line: <span className="text-purple-400 font-bold">{selectedLineIndex}</span></p>
+          <Button onClick={handleDeleteLine} variant="destructive" size="sm" className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold shadow-lg">
             🗑️ Delete Line
           </Button>
         </div>
       )}
 
+      {/* Performance Stats */}
+      <div className="absolute bottom-4 right-4 bg-black/90 p-4 rounded-lg border border-gray-600 shadow-xl" style={{ 
+        bottom: '10px',
+        right: '10px',
+        minWidth: '200px',
+        backdropFilter: 'blur(10px)',
+        zIndex: '1001'
+      }}>
+        <h3 className="text-white text-lg font-bold mb-3 text-blue-400 border-b border-gray-600 pb-2">Performance Stats</h3>
+        <div className="space-y-2 text-sm">
+          <div className="flex justify-between items-center">
+            <span className="text-gray-300">FPS:</span>
+            <span className="text-green-400 font-mono font-bold">{performanceStats.fps}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-gray-300">Memory:</span>
+            <span className="text-blue-400 font-mono font-bold">{performanceStats.memory} MB</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-gray-300">Vertices:</span>
+            <span className="text-purple-400 font-mono">{performanceStats.vertices.toLocaleString()}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-gray-300">Segments:</span>
+            <span className="text-cyan-400 font-mono">{performanceStats.segments.toLocaleString()}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-gray-300">Lines:</span>
+            <span className="text-orange-400 font-mono">{performanceStats.lines.toLocaleString()}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-gray-300">Triangles:</span>
+            <span className="text-yellow-400 font-mono">{performanceStats.triangles.toLocaleString()}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-gray-300">Render Calls:</span>
+            <span className="text-pink-400 font-mono">{performanceStats.renderCalls}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-gray-300">Draw Calls:</span>
+            <span className="text-indigo-400 font-mono">{performanceStats.drawCalls}</span>
+          </div>
+        </div>
+      </div>
+
       {/* Debug and Stats info overlay */}
-      <div className="absolute bottom-4 left-4 text-white bg-black/70 p-2 rounded text-xs font-mono">
-        <p>Debug: {debugInfo || "Hover and click on lines"}</p>
-        <p>Hovered: {hoveredLineIndex !== null ? hoveredLineIndex : "None"}</p>
-        <p>Selected: {selectedLineIndex !== null ? selectedLineIndex : "None"}</p>
-        <div className="mt-2 pt-2 border-t border-gray-600">
-          <h4 className="font-bold mb-1">Interaction Stats (ms)</h4>
-          {Object.entries(interactionStats).map(([name, value]) => (
-            <p key={name}>{name.replace("hover", "raycaster").replace("_", " ")}: {value?.toFixed(4) ?? 'N/A'}</p>
-          ))}
+      <div className="absolute bottom-4 left-4 text-white bg-black/90 p-4 rounded-lg border border-gray-600 shadow-xl" style={{
+        backdropFilter: 'blur(10px)',
+        maxWidth: '380px'
+      }}>
+        <h3 className="text-lg font-bold mb-3 text-blue-400 border-b border-gray-600 pb-2">Debug Info</h3>
+        <div className="space-y-2 text-sm text-gray-300">
+          <p className="break-words bg-gray-800/50 p-2 rounded">{debugInfo || "Hover and click on lines"}</p>
+          <div className="flex justify-between items-center">
+            <span>Hovered:</span>
+            <span className="text-yellow-400 font-mono font-bold">{hoveredLineIndex !== null ? hoveredLineIndex : "None"}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span>Selected:</span>
+            <span className="text-purple-400 font-mono font-bold">{selectedLineIndex !== null ? selectedLineIndex : "None"}</span>
+          </div>
+        </div>
+        
+        <div className="mt-4 pt-3 border-t border-gray-600">
+          <h4 className="font-bold mb-2 text-blue-400">Interaction Stats (ms)</h4>
+          <div className="space-y-1 text-xs font-mono">
+            {Object.entries(interactionStats).map(([name, value]) => (
+              <p key={name} className="flex justify-between">
+                <span className="text-gray-300">{name.replace("hover", "raycaster").replace("_", " ")}:</span>
+                <span className="text-green-400">{value?.toFixed(4) ?? 'N/A'}</span>
+              </p>
+            ))}
+          </div>
         </div>
       </div>
     </div>
