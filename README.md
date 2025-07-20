@@ -1,3 +1,50 @@
+# Three.js Disconnected Lines 
+## Line2 Performance Comparison - Single vs Multiple Objects
+
+A Next.js application demonstrating high-performance interactive 3D line rendering using Three.js and React Three Fiber. This project compares single Line2 object optimization vs multiple Line2 objects for rendering 2000+ interactive lines with real-time editing capabilities.
+
+## 🚀 Live Demo
+
+**[View the live application](https://ithihasmadala.github.com/disconnected-lines-threejs)**
+
+## 🛠️ Tech Stack
+
+- **Framework**: Next.js 15 with App Router
+- **3D Graphics**: Three.js with React Three Fiber
+- **Styling**: Tailwind CSS with shadcn/ui components
+- **Language**: TypeScript
+- **Deployment**: GitHub Pages (Static Export)
+
+## 📦 Build & Development
+
+```bash
+# Install dependencies
+pnpm install
+
+# Run development server
+pnpm dev
+
+# Build for production
+pnpm build
+
+# Deploy to GitHub Pages
+pnpm deploy
+```
+
+## 🎯 Key Features
+
+- **Performance Optimization**: Single Line2 object rendering for 2000+ lines
+- **Interactive Editing**: Real-time point manipulation and line editing
+- **Dynamic Point Management**: Add, delete, and drag points on lines
+- **Performance Monitoring**: Real-time FPS and rendering statistics
+- **Responsive Design**: Optimized for desktop and mobile devices
+
+## 🏗️ Architecture
+
+The application uses a sophisticated single Line2 optimization technique that consolidates all line segments into one efficient object, dramatically reducing draw calls and improving performance. See the detailed technical documentation below for implementation specifics.
+
+---
+
 ## Understanding and Implementing Interactive Disconnected Lines in Three.js with React Three Fiber (Single Line2 Optimization)
 
 This document details the architecture and implementation of the `DisconnectedLines` component, a highly optimized solution for rendering and interacting with thousands of individual lines in a Three.js scene using React Three Fiber. The core innovation lies in leveraging a single `Line2` object to represent all lines, significantly boosting performance.
