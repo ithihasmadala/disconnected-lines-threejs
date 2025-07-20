@@ -8,6 +8,8 @@ import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js"
 import { LineSegmentsGeometry } from "three/examples/jsm/lines/LineSegmentsGeometry.js"
 import { Color, Raycaster, Vector2, SphereGeometry, MeshStandardMaterial, Mesh, Vector3, Plane } from "three"
 import { Button } from "@/components/ui/button"
+import DisconnectedLinesMultiple from "@/components/DisconnectedLinesMultiple"
+import Stats from "stats.js"
 
 interface LineData {
   positions: Float32Array
@@ -820,6 +822,26 @@ export default function Component() {
   const [debugInfo, setDebugInfo] = useState<string>("")
   const [hoveredLineIndex, setHoveredLineIndex] = useState<number | null>(null)
   const [selectedLineIndex, setSelectedLineIndex] = useState<number | null>(null)
+  const [mode, setMode] = useState<'A' | 'B'>('A')
+  const statsRef = useRef<Stats | null>(null)
+
+  useEffect(() => {
+    statsRef.current = new Stats()
+    statsRef.current.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
+    document.body.appendChild(statsRef.current.dom)
+
+    const animate = () => {
+      statsRef.current?.begin()
+      statsRef.current?.end()
+      requestAnimationFrame(animate)
+    }
+
+    requestAnimationFrame(animate)
+
+    return () => {
+      document.body.removeChild(statsRef.current!.dom)
+    }
+  }, [])
 
   const handleDebugUpdate = (info: string, hoveredLine: number | null, selectedLine: number | null) => {
     setDebugInfo(info)
@@ -847,13 +869,23 @@ export default function Component() {
         <pointLight position={[10, -10, 10]} intensity={0.3} />
 
         {/* The main lines component */}
-        <DisconnectedLines 
-          onDebugUpdate={handleDebugUpdate} 
-          onLineDeleted={(lineIndex) => {
-            setSelectedLineIndex(null)
-            setDebugInfo(`Line ${lineIndex} deleted`)
-          }}
-        />
+        {mode === 'A' ? (
+          <DisconnectedLines 
+            onDebugUpdate={handleDebugUpdate} 
+            onLineDeleted={(lineIndex) => {
+              setSelectedLineIndex(null)
+              setDebugInfo(`Line ${lineIndex} deleted`)
+            }}
+          />
+        ) : (
+          <DisconnectedLinesMultiple 
+            onDebugUpdate={handleDebugUpdate} 
+            onLineDeleted={(lineIndex) => {
+              setSelectedLineIndex(null)
+              setDebugInfo(`Line ${lineIndex} deleted`)
+            }}
+          />
+        )}
       </Canvas>
 
       {/* Info overlay */}
@@ -868,6 +900,13 @@ export default function Component() {
         <p className="text-sm text-blue-400">🖱️ Drag spheres: Move points</p>
         <p className="text-sm text-orange-400">🗑️ Right-click sphere: Delete point</p>
         <p className="text-sm text-gray-300">Click empty space to deselect</p>
+        <div className="mt-4">
+          <h3 className="text-lg font-bold mb-2">Rendering Mode</h3>
+          <div className="flex space-x-2">
+            <Button onClick={() => setMode('A')} variant={mode === 'A' ? "secondary" : "outline"}>Mode A</Button>
+            <Button onClick={() => setMode('B')} variant={mode === 'B' ? "secondary" : "outline"}>Mode B</Button>
+          </div>
+        </div>
       </div>
 
       {/* Control panel */}
