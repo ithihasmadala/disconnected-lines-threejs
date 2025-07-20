@@ -5,7 +5,7 @@ A Next.js application demonstrating high-performance interactive 3D line renderi
 
 ## 🚀 Live Demo
 
-**[View the live application](https://ithihasmadala.github.com/disconnected-lines-threejs)**
+**[View the live application](https://ithihasmadala.github.io/disconnected-lines-threejs)**
 
 ## 🛠️ Tech Stack
 
