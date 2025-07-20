@@ -17,9 +17,10 @@ interface LineData {
 interface DisconnectedLinesMultipleProps {
   onDebugUpdate: (info: string, hoveredLine: number | null, selectedLine: number | null) => void
   onLineDeleted?: (lineIndex: number) => void
+  setInteractionStats: (stats: any) => void
 }
 
-function DisconnectedLinesMultiple({ onDebugUpdate, onLineDeleted }: DisconnectedLinesMultipleProps) {
+function DisconnectedLinesMultiple({ onDebugUpdate, onLineDeleted, setInteractionStats }: DisconnectedLinesMultipleProps) {
   const [lines, setLines] = useState<LineData[]>([])
   const spheresRef = useRef<Mesh[]>([])
   const orbitControlsRef = useRef<any>(null)
@@ -122,6 +123,7 @@ function DisconnectedLinesMultiple({ onDebugUpdate, onLineDeleted }: Disconnecte
 
   useEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {
+      const start = performance.now()
       const rect = gl.domElement.getBoundingClientRect()
       mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
       mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1
@@ -139,19 +141,25 @@ function DisconnectedLinesMultiple({ onDebugUpdate, onLineDeleted }: Disconnecte
           geometry.setPositions(positions)
           setLines(newLines)
         }
+        setInteractionStats((prev: any) => ({ ...prev, drag: performance.now() - start }))
       } else {
         const intersects = raycaster.intersectObjects(lines.map(l => l.line), false)
         if (intersects.length > 0) {
           const intersectedLine = intersects[0].object as Line2
           const lineIndex = intersectedLine.userData.lineIndex
+          const debugInfo = `Hover - Line: ${lineIndex} | Selected: ${selectedLineIndex !== null ? selectedLineIndex : "None"}`
+          onDebugUpdate(debugInfo, lineIndex, selectedLineIndex)
           if (hoveredLineIndex !== lineIndex) {
             setHoveredLineIndex(lineIndex)
           }
         } else {
+          const debugInfo = `No hover | Selected: ${selectedLineIndex !== null ? selectedLineIndex : "None"}`
+          onDebugUpdate(debugInfo, null, selectedLineIndex)
           if (hoveredLineIndex !== null) {
             setHoveredLineIndex(null)
           }
         }
+        setInteractionStats((prev: any) => ({ ...prev, hover: performance.now() - start }))
       }
     }
 
@@ -193,6 +201,7 @@ function DisconnectedLinesMultiple({ onDebugUpdate, onLineDeleted }: Disconnecte
     }
 
     const handleClick = (event: MouseEvent) => {
+      const start = performance.now()
       if (isDragging) return
 
       const rect = gl.domElement.getBoundingClientRect()
@@ -234,17 +243,26 @@ function DisconnectedLinesMultiple({ onDebugUpdate, onLineDeleted }: Disconnecte
           geometry.setPositions(positions)
           setLines(newLines)
           createSpheresForLine(lineIndex)
+          const debugInfo = `Added point to Line: ${lineIndex} | Points: ${newLines[lineIndex].points.length}`
+          onDebugUpdate(debugInfo, hoveredLineIndex, lineIndex)
+          setInteractionStats((prev: any) => ({ ...prev, addPoint: performance.now() - start }))
         } else {
           setSelectedLineIndex(lineIndex)
           createSpheresForLine(lineIndex)
+          const debugInfo = `Selected Line: ${lineIndex} | Points: ${lines[lineIndex].points.length}`
+          onDebugUpdate(debugInfo, hoveredLineIndex, lineIndex)
+          setInteractionStats((prev: any) => ({ ...prev, select: performance.now() - start }))
         }
       } else {
         setSelectedLineIndex(null)
         removeSpheres()
+        const debugInfo = `Deselected | Hover: ${hoveredLineIndex !== null ? hoveredLineIndex : "None"}`
+        onDebugUpdate(debugInfo, hoveredLineIndex, null)
       }
     }
 
     const handleContextMenu = (event: MouseEvent) => {
+      const start = performance.now()
       event.preventDefault()
       if (selectedLineIndex === null) return
 
@@ -267,6 +285,9 @@ function DisconnectedLinesMultiple({ onDebugUpdate, onLineDeleted }: Disconnecte
             geometry.setPositions(positions)
             setLines(newLines)
             createSpheresForLine(lineIndex)
+            const debugInfo = `Deleted point ${pointIndex} from line ${lineIndex}`
+            onDebugUpdate(debugInfo, hoveredLineIndex, selectedLineIndex)
+            setInteractionStats((prev: any) => ({ ...prev, deletePoint: performance.now() - start }))
           }
         }
       }
@@ -289,6 +310,7 @@ function DisconnectedLinesMultiple({ onDebugUpdate, onLineDeleted }: Disconnecte
     const handleDeleteLineEvent = (event: CustomEvent) => {
       const { lineIndex } = event.detail
       if (lineIndex === selectedLineIndex) {
+        setInteractionStats((prev: any) => ({ ...prev, deleteLine_start: performance.now() }))
         const newLines = [...lines]
         const lineData = newLines[lineIndex]
         scene.remove(lineData.line)
@@ -310,7 +332,7 @@ function DisconnectedLinesMultiple({ onDebugUpdate, onLineDeleted }: Disconnecte
     return () => {
       window.removeEventListener("deleteLine", handleDeleteLineEvent as EventListener)
     }
-  }, [selectedLineIndex, lines, scene, removeSpheres, onLineDeleted])
+  }, [selectedLineIndex, lines, scene, removeSpheres, onLineDeleted, setInteractionStats])
 
   useEffect(() => {
     lines.forEach((lineData, index) => {

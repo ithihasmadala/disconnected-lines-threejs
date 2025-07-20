@@ -24,9 +24,10 @@ interface LineData {
 interface DisconnectedLinesProps {
   onDebugUpdate: (info: string, hoveredLine: number | null, selectedLine: number | null) => void
   onLineDeleted?: (lineIndex: number) => void
+  setInteractionStats: (stats: any) => void
 }
 
-function DisconnectedLines({ onDebugUpdate, onLineDeleted }: DisconnectedLinesProps) {
+function DisconnectedLines({ onDebugUpdate, onLineDeleted, setInteractionStats }: DisconnectedLinesProps) {
   const lineRef = useRef<Line2>(null)
   const spheresRef = useRef<Mesh[]>([])
   const orbitControlsRef = useRef<any>(null)
@@ -461,7 +462,7 @@ function DisconnectedLines({ onDebugUpdate, onLineDeleted }: DisconnectedLinesPr
       scene.remove(sphere)
       sphere.geometry.dispose()
       if (Array.isArray(sphere.material)) {
-        sphere.material.forEach((mat) => mat.dispose())
+        sphere.material.forEach((mat: any) => mat.dispose())
       } else {
         sphere.material.dispose()
       }
@@ -472,6 +473,7 @@ function DisconnectedLines({ onDebugUpdate, onLineDeleted }: DisconnectedLinesPr
   // Right-click handler for point deletion
   useEffect(() => {
     const handleContextMenu = (event: MouseEvent) => {
+      const start = performance.now()
       event.preventDefault()
 
       if (selectedLineIndex === null || isDragging) return
@@ -499,6 +501,7 @@ function DisconnectedLines({ onDebugUpdate, onLineDeleted }: DisconnectedLinesPr
 
           const debugInfo = `Deleted point ${userData.pointIndex} from line ${userData.lineIndex}`
           onDebugUpdate(debugInfo, hoveredLineIndex, selectedLineIndex)
+          setInteractionStats((prev: any) => ({ ...prev, deletePoint: performance.now() - start }))
         }
       }
     }
@@ -554,6 +557,7 @@ function DisconnectedLines({ onDebugUpdate, onLineDeleted }: DisconnectedLinesPr
   // Mouse move handler for dragging and hover detection
   useEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {
+      const start = performance.now()
       if (!lineRef.current || !lineData) return
 
       // Convert mouse coordinates to normalized device coordinates
@@ -577,6 +581,7 @@ function DisconnectedLines({ onDebugUpdate, onLineDeleted }: DisconnectedLinesPr
           const debugInfo = `Dragging point ${userData.pointIndex} of line ${userData.lineIndex}`
           onDebugUpdate(debugInfo, hoveredLineIndex, selectedLineIndex)
         }
+        setInteractionStats((prev: any) => ({ ...prev, drag: performance.now() - start }))
       } else {
         // Handle hover detection
         raycaster.setFromCamera(mouse, camera)
@@ -607,6 +612,7 @@ function DisconnectedLines({ onDebugUpdate, onLineDeleted }: DisconnectedLinesPr
             setHoveredLineIndex(null)
           }
         }
+        setInteractionStats((prev: any) => ({ ...prev, hover: performance.now() - start }))
       }
     }
 
@@ -701,6 +707,7 @@ function DisconnectedLines({ onDebugUpdate, onLineDeleted }: DisconnectedLinesPr
   // Click handler for selection and point addition
   useEffect(() => {
     const handleClick = (event: MouseEvent) => {
+      const start = performance.now()
       if (!lineRef.current || !lineData || isDragging) return
 
       // Convert mouse coordinates to normalized device coordinates
@@ -730,6 +737,7 @@ function DisconnectedLines({ onDebugUpdate, onLineDeleted }: DisconnectedLinesPr
 
             const debugInfo = `Added point to Line: ${lineIndex} | Points: ${lineData.linePoints[lineIndex].length + 1}`
             onDebugUpdate(debugInfo, hoveredLineIndex, lineIndex)
+            setInteractionStats((prev: any) => ({ ...prev, addPoint: performance.now() - start }))
           } else {
             // Select the line and create spheres
             console.log(`Selected line ${lineIndex}`)
@@ -738,6 +746,7 @@ function DisconnectedLines({ onDebugUpdate, onLineDeleted }: DisconnectedLinesPr
 
             const debugInfo = `Selected Line: ${lineIndex} | Points: ${lineData.linePoints[lineIndex]?.length || 0}`
             onDebugUpdate(debugInfo, hoveredLineIndex, lineIndex)
+            setInteractionStats((prev: any) => ({ ...prev, select: performance.now() - start }))
           }
         }
       } else {
@@ -772,12 +781,14 @@ function DisconnectedLines({ onDebugUpdate, onLineDeleted }: DisconnectedLinesPr
   // Listen for delete line events from UI
   useEffect(() => {
     const handleDeleteLineEvent = (event: CustomEvent) => {
+      const start = performance.now()
       const { lineIndex } = event.detail
       if (lineIndex === selectedLineIndex) {
         deleteLine(lineIndex)
         setSelectedLineIndex(null)
         onDebugUpdate(`Line ${lineIndex} deleted`, hoveredLineIndex, null)
         onLineDeleted?.(lineIndex)
+        setInteractionStats((prev: any) => ({ ...prev, deleteLine: performance.now() - start }))
       }
     }
 
@@ -818,17 +829,38 @@ function DisconnectedLines({ onDebugUpdate, onLineDeleted }: DisconnectedLinesPr
   )
 }
 
+interface InteractionStats {
+  [key: string]: number | null
+}
+
 export default function Component() {
   const [debugInfo, setDebugInfo] = useState<string>("")
   const [hoveredLineIndex, setHoveredLineIndex] = useState<number | null>(null)
   const [selectedLineIndex, setSelectedLineIndex] = useState<number | null>(null)
   const [mode, setMode] = useState<'A' | 'B'>('A')
+  const [interactionStats, setInteractionStats] = useState<InteractionStats>({})
   const statsRef = useRef<Stats | null>(null)
 
   useEffect(() => {
     statsRef.current = new Stats()
     statsRef.current.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
     document.body.appendChild(statsRef.current.dom)
+
+    const toggleStatsPanel = () => {
+      if (statsRef.current) {
+        const currentPanel = statsRef.current.dom.style.display
+        statsRef.current.showPanel(currentPanel === "none" ? 0 : 2)
+      }
+    }
+
+    const statsToggleButton = document.createElement("button")
+    statsToggleButton.textContent = "Toggle Stats (FPS/MB)"
+    statsToggleButton.style.position = "absolute"
+    statsToggleButton.style.top = "4px"
+    statsToggleButton.style.left = "100px"
+    statsToggleButton.style.zIndex = "1000"
+    statsToggleButton.onclick = toggleStatsPanel
+    document.body.appendChild(statsToggleButton)
 
     const animate = () => {
       statsRef.current?.begin()
@@ -840,6 +872,7 @@ export default function Component() {
 
     return () => {
       document.body.removeChild(statsRef.current!.dom)
+      document.body.removeChild(statsToggleButton)
     }
   }, [])
 
@@ -876,6 +909,7 @@ export default function Component() {
               setSelectedLineIndex(null)
               setDebugInfo(`Line ${lineIndex} deleted`)
             }}
+            setInteractionStats={setInteractionStats}
           />
         ) : (
           <DisconnectedLinesMultiple 
@@ -883,7 +917,9 @@ export default function Component() {
             onLineDeleted={(lineIndex) => {
               setSelectedLineIndex(null)
               setDebugInfo(`Line ${lineIndex} deleted`)
+              setInteractionStats((prev) => ({ ...prev, deleteLine: performance.now() - (prev.deleteLine_start || 0) }))
             }}
+            setInteractionStats={setInteractionStats}
           />
         )}
       </Canvas>
@@ -903,8 +939,8 @@ export default function Component() {
         <div className="mt-4">
           <h3 className="text-lg font-bold mb-2">Rendering Mode</h3>
           <div className="flex space-x-2">
-            <Button onClick={() => setMode('A')} variant={mode === 'A' ? "secondary" : "outline"}>Mode A</Button>
-            <Button onClick={() => setMode('B')} variant={mode === 'B' ? "secondary" : "outline"}>Mode B</Button>
+            <Button onClick={() => setMode('A')} variant={mode === 'A' ? "secondary" : "outline"} className="text-white">Disconnected Lines</Button>
+            <Button onClick={() => setMode('B')} variant={mode === 'B' ? "secondary" : "outline"} className="text-white">Multiple Line2</Button>
           </div>
         </div>
       </div>
@@ -920,11 +956,17 @@ export default function Component() {
         </div>
       )}
 
-      {/* Debug info overlay */}
+      {/* Debug and Stats info overlay */}
       <div className="absolute bottom-4 left-4 text-white bg-black/70 p-2 rounded text-xs font-mono">
         <p>Debug: {debugInfo || "Hover and click on lines"}</p>
         <p>Hovered: {hoveredLineIndex !== null ? hoveredLineIndex : "None"}</p>
         <p>Selected: {selectedLineIndex !== null ? selectedLineIndex : "None"}</p>
+        <div className="mt-2 pt-2 border-t border-gray-600">
+          <h4 className="font-bold mb-1">Interaction Stats (ms)</h4>
+          {Object.entries(interactionStats).map(([name, value]) => (
+            <p key={name}>{name.replace("hover", "raycaster").replace("_", " ")}: {value?.toFixed(4) ?? 'N/A'}</p>
+          ))}
+        </div>
       </div>
     </div>
   )
