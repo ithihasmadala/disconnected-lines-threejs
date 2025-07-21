@@ -1058,40 +1058,38 @@ export default function Component() {
       </Canvas>
 
       {/* Info overlay */}
-      <div className="absolute top-6 left-6 text-white bg-black/90 p-6 rounded-xl border border-gray-600 shadow-2xl" style={{
-        backdropFilter: 'blur(10px)',
-        maxWidth: '380px'
+      <div className="absolute top-4 left-4 text-white bg-black/90 p-3 rounded-lg border border-gray-600 shadow-xl" style={{
+        backdropFilter: 'blur(8px)',
+        maxWidth: '260px'
       }}>
-        <h2 className="text-2xl font-bold mb-4 text-blue-400 border-b border-gray-600 pb-3">Line2 Performance Comparison</h2>
-        <div className="space-y-2 text-sm mb-6">
+        <h2 className="text-lg font-bold mb-2 text-blue-400 border-b border-gray-600 pb-2">Line2 Performance Comparison</h2>
+        <div className="space-y-1 text-xs mb-3">
           <p className="text-gray-300">5000 interactive lines</p>
           <p className="text-gray-300">Performance comparison tool</p>
           <p className="text-gray-300">Real-time metrics & analysis</p>
         </div>
-        
-        <div className="space-y-3 mb-6">
-          <p className="text-sm text-yellow-400">🎯 Hover: Yellow highlight</p>
-          <p className="text-sm text-purple-400">🎯 Click: Magenta selection + white spheres</p>
-          <p className="text-sm text-green-400">🎯 Click selected line: Add green point</p>
-          <p className="text-sm text-blue-400">🖱️ Drag spheres: Move points</p>
-          <p className="text-sm text-orange-400">🗑️ Right-click sphere: Delete point</p>
-          <p className="text-sm text-gray-300">Click empty space to deselect</p>
+        <div className="space-y-1 mb-3">
+          <p className="text-xs text-yellow-400">🎯 Hover: Yellow highlight</p>
+          <p className="text-xs text-purple-400">🎯 Click: Magenta selection + white spheres</p>
+          <p className="text-xs text-green-400">🎯 Click selected line: Add green point</p>
+          <p className="text-xs text-blue-400">🖱️ Drag spheres: Move points</p>
+          <p className="text-xs text-orange-400">🗑️ Right-click sphere: Delete point</p>
+          <p className="text-xs text-gray-300">Click empty space to deselect</p>
         </div>
-        
         <div>
-          <h3 className="text-lg font-bold mb-4 text-blue-400">Rendering Mode</h3>
-          <div className="flex flex-col space-y-2">
+          <h3 className="text-base font-bold mb-2 text-blue-400">Rendering Mode</h3>
+          <div className="flex flex-col space-y-1">
             <Button 
               onClick={() => setMode('A')} 
               variant={mode === 'A' ? "default" : "outline"} 
-              className={`${mode === 'A' ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-gray-800 hover:bg-gray-700 text-gray-200'} border-gray-600 font-semibold shadow-lg px-3 py-2 text-sm`}
+              className={`${mode === 'A' ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-gray-800 hover:bg-gray-700 text-gray-200'} border-gray-600 font-semibold shadow px-2 py-1 text-xs`}
             >
-              Disconnected Lines - Single Line2 Object
+              Disconnected Lines - Single Line2
             </Button>
             <Button 
               onClick={() => setMode('B')} 
               variant={mode === 'B' ? "default" : "outline"} 
-              className={`${mode === 'B' ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-gray-800 hover:bg-gray-700 text-gray-200'} border-gray-600 font-semibold shadow-lg px-3 py-2 text-sm`}
+              className={`${mode === 'B' ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-gray-800 hover:bg-gray-700 text-gray-200'} border-gray-600 font-semibold shadow px-2 py-1 text-xs`}
             >
               Multiple Line2 Objects
             </Button>
@@ -1115,40 +1113,12 @@ export default function Component() {
         </div>
       )}
 
-      {/* Performance Stats */}
-      <div className="absolute bottom-4 right-4 bg-black/90 p-4 rounded-lg border border-gray-600 shadow-xl" style={{ 
-        bottom: '16px',
-        right: '16px',
-        minWidth: '200px',
-        maxWidth: '220px',
-        backdropFilter: 'blur(10px)',
-        zIndex: '1001'
-      }}>
-        <h3 className="text-white text-sm font-bold mb-3 text-blue-400 border-b border-gray-600 pb-2">Performance</h3>
-        <div className="space-y-2 text-xs">
-          <div className="flex justify-between items-center">
-            <span className="text-gray-300">FPS:</span>
-            <span className="text-green-400 font-mono font-bold">{performanceStats.fps}</span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-gray-300">Memory:</span>
-            <span className="text-blue-400 font-mono">{performanceStats.memory} MB</span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-gray-300">Lines:</span>
-            <span className="text-orange-400 font-mono">{performanceStats.lines.toLocaleString()}</span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-gray-300">Render Calls:</span>
-            <span className="text-pink-400 font-mono">{performanceStats.renderCalls}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Debug and Stats info overlay */}
-      <div className="absolute bottom-6 left-6 text-white bg-black/90 p-6 rounded-xl border border-gray-600 shadow-2xl" style={{
-        backdropFilter: 'blur(10px)',
-        maxWidth: '420px'
+      {/* Combined Debug, Interaction, and Performance Stats overlay */}
+      <div className="absolute right-4 bg-black/90 p-6 rounded-xl border border-gray-600 shadow-2xl" style={{
+        bottom: '24px',
+        maxWidth: '420px',
+        zIndex: 1002,
+        backdropFilter: 'blur(10px)'
       }}>
         <h3 className="text-lg font-bold mb-4 text-blue-400 border-b border-gray-600 pb-3">Debug Info</h3>
         <div className="space-y-2 text-sm text-gray-300">
@@ -1162,7 +1132,6 @@ export default function Component() {
             <span className="text-purple-400 font-mono font-bold">{selectedLineIndex !== null ? selectedLineIndex : "None"}</span>
           </div>
         </div>
-        
         <div className="mt-4 pt-3 border-t border-gray-600">
           <h4 className="font-bold mb-2 text-blue-400">Interaction Stats (ms)</h4>
           <div className="space-y-1 text-xs font-mono">
@@ -1172,6 +1141,27 @@ export default function Component() {
                 <span className="text-green-400">{value?.toFixed(4) ?? 'N/A'}</span>
               </p>
             ))}
+          </div>
+        </div>
+        <div className="mt-6 pt-4 border-t border-gray-600">
+          <h3 className="text-white text-sm font-bold mb-3 text-blue-400 border-b border-gray-600 pb-2">Performance</h3>
+          <div className="space-y-2 text-xs">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-300">FPS:</span>
+              <span className="text-green-400 font-mono font-bold">{performanceStats.fps}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-300">Memory:</span>
+              <span className="text-blue-400 font-mono">{performanceStats.memory} MB</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-300">Lines:</span>
+              <span className="text-orange-400 font-mono">{performanceStats.lines.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-300">Render Calls:</span>
+              <span className="text-pink-400 font-mono">{performanceStats.renderCalls}</span>
+            </div>
           </div>
         </div>
       </div>
