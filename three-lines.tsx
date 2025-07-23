@@ -3,7 +3,7 @@
 import { useRef, useMemo, useEffect, useState, useCallback } from "react"
 import { Canvas, useThree } from "@react-three/fiber"
 import { OrbitControls } from "@react-three/drei"
-import { Line2 } from "three/examples/jsm/lines/Line2.js"
+import { LineSegments2 } from "three/examples/jsm/lines/LineSegments2.js"
 import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js"
 import { LineSegmentsGeometry } from "three/examples/jsm/lines/LineSegmentsGeometry.js"
 import { Color, Raycaster, Vector2, SphereGeometry, MeshStandardMaterial, Mesh, Vector3, Plane } from "three"
@@ -861,7 +861,7 @@ function DisconnectedLines({ onDebugUpdate, onLineDeleted, setInteractionStats, 
 
   return (
     <>
-      <primitive ref={lineRef} object={new Line2(geometry, material)} />
+      <primitive ref={lineRef} object={new LineSegments2(geometry, material)} />
       <OrbitControls
         ref={orbitControlsRef}
         enablePan={true}
