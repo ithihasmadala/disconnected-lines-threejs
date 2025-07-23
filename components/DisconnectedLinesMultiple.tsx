@@ -93,7 +93,6 @@ function DisconnectedLinesMultiple({ onDebugUpdate, onLineDeleted, setInteractio
   useEffect(() => {
     console.time("Mode B Initial Load")
     const numLines = 5000
-    const pointsPerLine = 50
     const gridSize = Math.ceil(Math.pow(numLines, 1 / 3))
     const spacing = 30
 
@@ -113,6 +112,7 @@ function DisconnectedLinesMultiple({ onDebugUpdate, onLineDeleted, setInteractio
 
       const currentLinePoints: [number, number, number][] = []
       const localRange = 12
+      const pointsPerLine = Math.floor(Math.random() * 11) + 50 // 50-60 inclusive
 
       for (let pointIndex = 0; pointIndex < pointsPerLine; pointIndex++) {
         const x = centerX + (Math.random() - 0.5) * localRange

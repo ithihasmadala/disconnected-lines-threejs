@@ -63,20 +63,26 @@ function DisconnectedLines({ onDebugUpdate, onLineDeleted, setInteractionStats, 
   // Initialize line data
   const initialLineData = useMemo((): LineData => {
     const numLines = 5000
-    const pointsPerLine = 50
+    // const pointsPerLine = 50 // REMOVE this line
 
     // Create a 3D grid to distribute lines
     const gridSize = Math.ceil(Math.pow(numLines, 1 / 3))
     const spacing = 30 // Reduced spacing to fit more lines
 
-    // Calculate total segments needed
-    const segmentsPerLine = pointsPerLine - 1
-    const totalSegments = numLines * segmentsPerLine
-    const totalPoints = totalSegments * 2
+    // We'll need to calculate totalSegments and totalPoints dynamically
+    let totalSegments = 0
+    let totalPoints = 0
+    const pointsPerLineArr: number[] = []
+    for (let i = 0; i < numLines; i++) {
+      const points = Math.floor(Math.random() * 11) + 50 // 50-60 inclusive
+      pointsPerLineArr.push(points)
+      totalSegments += points - 1
+      totalPoints += points
+    }
 
-    const positions = new Float32Array(totalPoints * 3)
-    const colors = new Float32Array(totalPoints * 3)
-    const originalColors = new Float32Array(totalPoints * 3)
+    const positions = new Float32Array(totalSegments * 2 * 3)
+    const colors = new Float32Array(totalSegments * 2 * 3)
+    const originalColors = new Float32Array(totalSegments * 2 * 3)
     const segmentToLineMap: number[] = []
     const lineColors: Color[] = []
     const linePoints: [number, number, number][][] = []
@@ -104,7 +110,7 @@ function DisconnectedLines({ onDebugUpdate, onLineDeleted, setInteractionStats, 
       // Generate points for this line within its own region
       const currentLinePoints: [number, number, number][] = []
       const localRange = 12 // Reduced range to prevent overlap
-
+      const pointsPerLine = pointsPerLineArr[lineIndex]
       for (let pointIndex = 0; pointIndex < pointsPerLine; pointIndex++) {
         const x = centerX + (Math.random() - 0.5) * localRange
         const y = centerY + (Math.random() - 0.5) * localRange
@@ -116,7 +122,7 @@ function DisconnectedLines({ onDebugUpdate, onLineDeleted, setInteractionStats, 
       linePoints[lineIndex] = currentLinePoints
 
       // Convert line points to segments
-      for (let segmentIdx = 0; segmentIdx < segmentsPerLine; segmentIdx++) {
+      for (let segmentIdx = 0; segmentIdx < pointsPerLine - 1; segmentIdx++) {
         const point1 = currentLinePoints[segmentIdx]
         const point2 = currentLinePoints[segmentIdx + 1]
 
@@ -154,7 +160,7 @@ function DisconnectedLines({ onDebugUpdate, onLineDeleted, setInteractionStats, 
       }
     }
 
-    return { positions, colors, originalColors, segmentToLineMap, lineColors, segmentsPerLine, linePoints }
+    return { positions, colors, originalColors, segmentToLineMap, lineColors, segmentsPerLine: 0, linePoints }
   }, [])
 
   // Set initial line data
